@@ -24,10 +24,10 @@ It also uses XMLHttpRequests to send the actual pixel colors in hex using JSON.
 
 I have used the following external libraries:
   
- [ArduinoJSON by bblanchon](https://github.com/bblanchon/ArduinoJson)
- [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
- [ESP8266HTTPUpdateServer](https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer)
- [Adafruit_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel)
- [WiFiManager](https://github.com/tzapu/WiFiManager)
+ - [ArduinoJSON by bblanchon](https://github.com/bblanchon/ArduinoJson)
+ - [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
+ - [ESP8266HTTPUpdateServer](https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer)
+ - [Adafruit_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel)
+ - [WiFiManager](https://github.com/tzapu/WiFiManager)
  
  
