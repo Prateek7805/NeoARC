@@ -66,14 +66,6 @@ void setup() {
   delay(100);
   server.on("/jsonfile",HTTP_POST, handleJSON);
   
-  server.on("/brightness",HTTP_POST, [](){
-    int brightness = server.arg(0).toInt();
-    if(brightness>=10 && brightness<=255)
-      arc.setBrightness(brightness);
-    arc.show();
-    server.send(200, "type/text", ""); 
-  });
-  
   server.onNotFound(handleOtherFiles);
   httpUpdater.setup(&server);
   server.begin();
@@ -90,13 +82,6 @@ void loop() {
 
 void socketHandle(uint8_t num, WStype_t type, uint8_t * payload, size_t length){
   if(type == WStype_TEXT){
-    switch(payload[0]){
-      case 'b':
-              uint16_t brightness = (uint16_t) strtol((const char *)&payload[1], NULL, 10);
-              arc.setBrightness(brightness);
-              arc.show();
-              break;
-    }
   }
 }
 

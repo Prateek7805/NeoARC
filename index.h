@@ -11,11 +11,8 @@ const char html[] PROGMEM = R"=====(
     <div class="container center">
 
       <div class="header center w-100">
-
         <div class= "center generalWidth">
-
           <div class="d-ib w-25">
-
           </div>
           <div class="d-ib w-50">
               <p class="title generalWhite center">NeoARC</p>
@@ -26,9 +23,7 @@ const char html[] PROGMEM = R"=====(
             <input id="flag_settings" type="checkbox">
             <span class="slider round"></span>
             </label>
-
-        </div>
-
+          </div>
       </div>
     </div>
 
@@ -40,7 +35,7 @@ const char html[] PROGMEM = R"=====(
           <label class="colorWrapper"><input id="colorInput" type="color" value = "#ffd384" ></label>
         </div>
         <div class="rangeInput center">
-          <input id="brightness" class="generalRange mt-20" type="range" min="10" max="255" value="30"><span id="generalRangeValue" class="ml-10 generalWhite">30</span>
+          <input id="brightness" class="generalRange mt-20" type="range" min="0" max="100" value="100"><span id="generalRangeValue" class="ml-10 generalWhite">100</span>
         </div>
       </div>
 
