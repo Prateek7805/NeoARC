@@ -1,4 +1,4 @@
-const char css[] PROGMEM = R"=====(
+const char _styles[] PROGMEM = R"=====(
 *{
   box-sizing: border-box;
   outline: none;
@@ -10,13 +10,15 @@ body{
   background-color: #393e46;
   font-family: Calibri, monospace, sans-serif;
 }
-
+/* small css */
 .center{
   display: table;
   margin-left: auto;
   margin-right: auto;
 }
-
+.d-none{
+  display: none;
+}
 .d-ib{
   display: inline-block;
 }
@@ -35,6 +37,10 @@ body{
 .w-100{
   width: 100%;
 }
+.pb-10{
+  padding-bottom : 10px;
+}
+
 .title{
   font-size: 30px;
   font-weight: bold;
@@ -47,18 +53,19 @@ body{
   color: #fff;
 }
 .generalWidth{
-  width: 80%;
+  width: 90%;
 }
 .container{
-  width: 90%;
+  
+  width: 96%;
 }
 .header{
   margin-top: 10px;
  background-color: #222831;
  border: none;
- border-radius: 4px;
+ border-radius: 10px;
 }
-
+/* end of small css */
 
 /*Whole ARC Process*/
 .neoRing{
@@ -69,7 +76,6 @@ body{
   border: none;
   border-radius: 50%;
   background-color: #000;
-
 }
 .box{
   position: absolute;
@@ -81,7 +87,7 @@ body{
   background-color: #FFF;
   z-index: 1;
 }
-.dot{
+.innerDot{
   position: absolute;
   display: table;
   width: 15px;
@@ -109,23 +115,26 @@ body{
   background-color: #393e46;
   box-shadow: 0 0 -10px #fff76a;
 }
+/*ARC process complete*/
 
+/*color picker*/
 input[type="color"] {
 	visibility: hidden;
 }
 .colorWrapper{
   display: block;
-  background-color: #ffd384;
+  background-color: #fff;
   width: 32px;
   height: 32px;
   border: 1px solid #FFF;
   border-radius: 4px;
   transition: 0.2s ease-in-out;
 }
-
 .colorWrapper:active{
     transform: scale(0.97);
 }
+/* end of color picker */
+
 /* Range */
 .rangeInput{
   width: 250px;
@@ -165,6 +174,8 @@ input[type="color"] {
   cursor: pointer;
   border: none;
 }
+
+/* end of Range */
 
 /*Switch*/
 
@@ -220,6 +231,113 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+/* end of switch */
+
+
+/* Cards */
+.card{
+  margin-top: 20px;
+  display: table;
+  padding:10px;
+  background-color: #5b5b5b;
+  border: none;
+  border-radius: 10px;
+}
+.cardWC{
+  width: 25%;
+}
+.cardWCC{
+  width: 100%;
+}
+.card label{
+  display: table;
+  margin-top:10px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dot{
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: none;
+  border-radius: 50%;
+}
+
+.bg-blue{
+  background-color: #2196F3;
+}
+
+.bg-green{
+  background-color: #ABDF61;
+}
+/* end of cards */
+
+/* general buttons */
+.generalButtonCircle{
+  background-color: #fff;
+  margin-top: 10px;
+  padding: 20px;
+  border: none;
+  border-radius: 50%;
+  transition-duration: 150ms;
+  transition-property: transform;
+  transition-timing-function: ease-in-out;
+}
+
+.generalButtonCircle:active{
+  transform:scale(0.97);
+}
+.generalSubmitButton{
+  margin-top: 10px;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  padding: 10px;
+  color: #5b5b5b;
+  background-color: #ffc478;
+  transition: 0.2s;
+}
+
+.generalSubmitButton:hover{
+  background-color: #75cfb8;
+  color: #FFF;
+}
+
+.generalSubmitButton:active{
+  background-color: #75cfb8;
+  color: #FFF;
+  transform:scale(0.97);
+}
+/* End of general buttons*/
+
+/*General Input*/
+
+.generalInput{
+  width: 90%;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 4px;
+  transition: 0.2s;
+}
+
+.generalInput:focus{
+  box-shadow: 0 0 10px #fff76a;
+}
+/*End of General Input*/
+
+/* Responsive */
+@media(max-width: 767px) and (min-width: 500px){
+  .cardWC{
+    width: 50%;
+  }
+}
+@media(max-width: 499px){
+  .cardWC{
+    width: 80%;
+  }
 }
 
 )=====";

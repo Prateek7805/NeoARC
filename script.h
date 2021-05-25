@@ -1,13 +1,191 @@
-const char js[] PROGMEM = R"=====(
+const char _script[] PROGMEM = R"=====(
+const dev = true;
 var Socket;
+//variables
 var brightnessValue = 100;
+var currentSelectStatus = []; //whether a pixel is selected
+var colorSelected = false; //flag to check if pixels are selected or not
+var colorArray = []; //store the selected color without applying brightness
+var neoPixelColors = {}; //json to send to esp8266
+var count = 0;
+while(doc("M"+count)){
+  count++;
+}
+//Init of variables
+for(var i = 0; i<16; i++){
+  currentSelectStatus[i] = 0;
+  colorArray[i] = "#000000";
+  neoPixelColors[String.fromCharCode(i+65)] = "#000000";
+}
+doc("generalRangeValue").innerHTML = brightnessValue;
+
+
+//end of variables
+
+
+//drawing the neoPixel on the webpage (completed)
+  // getting the size of the neoPixel
+  doc("ringInterface").innerHTML = "<span class=\"box\"></span>";
+  const pixelSize = docOC("box").offsetWidth;
+  doc("ringInterface").innerHTML = "";
+
+  //Outer radius of the neoPixel Ring
+  const neoRadius = (doc("ringInterface").offsetWidth-(2*pixelSize))/2;
+  const offset = pixelSize/2;
+
+  for(var i=0; i<16; i++){
+    //some init stuff
+    //main drawing code
+    //absolute position coordinates of top and left are calculated
+    var topVal = parseInt(neoRadius + (neoRadius*Math.sin(i*22.5*Math.PI/180)))+offset;
+    var leftVal = parseInt(neoRadius + (neoRadius*Math.cos(i*22.5*Math.PI/180)))+offset;
+    var rotationVal = i*22.5; //individual pixels are rotated
+
+    doc("ringInterface").innerHTML += "<button id=\"n"+i+"\" class=\"box\" style = \"top : "+topVal+"px; left : "+leftVal+"px; transform: rotate("+rotationVal+"deg);"+"\" onclick = \"selectPixel(this);\"><span id=\"d"+i+"\" class=\"innerDot center\"></button>";
+  }
+  //draw the inner ring or inner circle matching the background-color
+  doc("ringInterface").innerHTML += "<span class=\"innerRing\"></span>";
+  //End of drawing
+  if(!dev){
+    document.body.style.opacity = 0.8;
+    document.body.style.cursor = "not-allowed";
+    elements = docOC("container").querySelectorAll('input, select, textarea, checkbox, radio, button');
+    for(i=0; i<elements.length;i++) {
+      elements[i].setAttribute('disabled', true);
+    }
+  }
+
+
+
 document.addEventListener('DOMContentLoaded', init, false);
+
+//init function
+
 function init(){
   Socket = new WebSocket('ws://'+window.location.hostname+':81/');
   Socket.onmessage = function(event){
-  er(event.data);
+    var data = event.data;
+    if(data[0] == "c"){
+      var json = JSON.parse(data.substring(1));
+      brightnessValue = (json["br"] >0)? json["br"] : 1;
+      doc("wiFiMODE").checked = (json["wifimode"] == 1)? true : false;
+      doc("M0").checked = (json["chase"] == 1)? true : false;
+      doc("M1").checked = (json["pf"] == 1)? true : false;
+      doc("M2").checked = (json["flash"] == 1)? true : false;
+      doc("brightness").value = brightnessValue;
+      doc("generalRangeValue").innerHTML = brightnessValue;
+
+      elements = docOC("container").querySelectorAll('input, select, textarea, checkbox, radio, button');
+      document.body.style.opacity = 1;
+      for(i=0; i<elements.length;i++) {
+          elements[i].removeAttribute('disabled');
+      }
+      document.body.style.cursor = "auto";
+    }
+}
+  Socket.onopen = function(event){
+    send("I", "");
   }
 }
+
+//xhr to send colorJSON
+function sendColors(){
+  var sendString = "";
+  for(var k in neoPixelColors){
+    sendString += neoPixelColors[k].substring(1);
+  }
+  send("n", sendString);
+}
+
+
+//function to select pixels
+function selectPixel(self){
+    const currentSel = self.id.substring(1);
+    if(self.style.boxShadow != ""){
+      self.style.boxShadow = "";
+      currentSelectStatus[currentSel] = 0;
+    }else{
+      self.style.boxShadow = "0 0 15px #ffd384";
+      currentSelectStatus[currentSel] = 1;
+    }
+  }
+
+//function to color pixels
+doc("colorInput").addEventListener('change', changeColor);
+
+function changeColor(){
+  colorSelected = true;//activate deselection of pixels on clicking the DOM
+  var colorVal = addBrightness(this.value);
+  docOC("colorWrapper").style.backgroundColor = colorVal;
+  for(var i=0; i<16; i++){
+      if(currentSelectStatus[i] == 1){
+        neoPixelColors[String.fromCharCode(i+65)] = colorVal;
+        applyColor(colorVal,i);
+        colorArray[i] = this.value;
+      }
+  }
+  sendColors();
+}
+
+//function for brightness change
+doc("brightness").addEventListener('change', changeBrightness);
+
+function changeBrightness(){
+  doc("generalRangeValue").innerHTML = this.value;
+  brightnessValue = this.value;
+  docOC("colorWrapper").style.backgroundColor = addBrightness(doc("colorInput").value);
+  for(var i=0; i<16; i++){
+      const colorVal = addBrightness(colorArray[i]);
+      applyColor(colorVal, i);
+      neoPixelColors[String.fromCharCode(i+65)] = colorVal;
+  }
+  sendColors();
+  send('B', brightnessValue);
+}
+
+doc("wiFiMODE").addEventListener('click', function(){
+  send('CW',(this.checked)? 1 : 0);
+});
+doc("restart").addEventListener('click', function(){
+  send('CR','');
+});
+
+doc("realtimeMode").addEventListener('click', function(){
+  doc("brightness").removeEventListener((this.checked)? 'change' : 'input', changeBrightness);
+  doc("brightness").addEventListener((this.checked)? 'input' : 'change', changeBrightness);
+  doc("colorInput").removeEventListener((this.checked)? 'change' : 'input', changeColor);
+  doc("colorInput").addEventListener((this.checked)? 'input' : 'change', changeColor);
+  send('CT',(this.checked)? 1 : 0);
+});
+
+
+for(var i = 0; i<count; i++){
+  doc("M"+i).addEventListener('click', features);
+}
+
+function features(){
+    if(this.checked){
+      for(var i = 0; i<count; i++){
+        if(this.id[1] != i)
+          doc("M"+i).checked = false;
+      }
+    }
+    send(this.id, (this.checked)? 1 : 0);
+}
+
+doc("random").addEventListener('click', function(){
+  for(var i=0; i<16; i++){
+      var randColor = randomHex();
+      var colorVal = addBrightness(randColor);
+      neoPixelColors[String.fromCharCode(i+65)] = colorVal;
+      applyColor(colorVal,i);
+      colorArray[i] = randColor;
+  }
+  sendColors();
+});
+
+
+//basic functions
 function doc(id){
   return document.getElementById(id);
 }
@@ -17,34 +195,19 @@ function docOC(className){
 function er(msg){
   console.log(msg);
 }
-function _send(head, data){
+function applyColor(color, num){
+  doc("d"+num).style.backgroundColor = color;
+}
+function send(head, data){
+  er(head+data);
   Socket.send(head+data);
 }
-var currentSelectStatus = [];
-var coloredPixels = [];
-var colorSelected = false;
-var colorArray = [];
 
-var neoPixelColors = {};
-doc("ringInterface").innerHTML = "<span class=\"box\"></span>";
-const pixelSize = document.getElementsByClassName("box")[0].offsetWidth;
-doc("ringInterface").innerHTML = "";
-const neoRadius = (doc("ringInterface").offsetWidth-(2*pixelSize))/2;
-const offset = pixelSize/2;
-
-for(var i=0; i<16; i++){
-  //some init stuff
-  coloredPixels[i] = false;
-  currentSelectStatus[i] = 0;
-  colorArray[i] = "#000000";
-  neoPixelColors["n"+i] = "#000000";
-  //main drawing code
-  var topVal = parseInt(neoRadius + (neoRadius*Math.sin(i*22.5*Math.PI/180)))+offset;
-  var leftVal = parseInt(neoRadius + (neoRadius*Math.cos(i*22.5*Math.PI/180)))+offset;
-  var rotationVal = i*22.5;
-  doc("ringInterface").innerHTML += "<button id=\"n"+i+"\" class=\"box\" style = \"top : "+topVal+"px; left : "+leftVal+"px; transform: rotate("+rotationVal+"deg);"+"\" onclick = \"selectPixel(this);\"><span id=\"d"+i+"\" class=\"dot center\"></button>";
-}
-  doc("ringInterface").innerHTML += "<span class=\"innerRing\"></span>";
+  //button to switch to controls
+doc("flag_settings").addEventListener('click', function(){
+  doc("colorInterface").style.display = (this.checked)? 'none' : 'table';
+  doc("controls").style.display = (this.checked)? 'table' : 'none';
+});
 
 //function to deselect pixels
 document.addEventListener('click', function(){
@@ -57,66 +220,10 @@ document.addEventListener('click', function(){
   }
 });
 
-//function to select pixels
-function selectPixel(self){
-    var currentSel = self.id.substring(1);
-    if(self.style.boxShadow != ""){
-      self.style.boxShadow = "";
-      currentSelectStatus[currentSel] = 0;
-    }else{
-      self.style.boxShadow = "0 0 15px #ffd384";
-      currentSelectStatus[currentSel] = 1;
-    }
-  }
-
-//function to color pixels
-doc("colorInput").addEventListener('input', function(){
-  colorSelected = true;
-  var colorVal = includeBrightness(parseInt(this.value.substring(1), 16));
-  docOC("colorWrapper").style.backgroundColor = colorVal;
-  for(var i=0; i<16; i++){
-      if(currentSelectStatus[i] == 1){
-        neoPixelColors["n"+i] = colorVal;
-        doc("d"+i).style.backgroundColor = neoPixelColors["n"+i];
-        doc("d"+i).style.boxShadow = "0 0 "+parseInt(doc("brightness").value/5)+"px "+neoPixelColors["n"+i];
-        colorArray[i] = this.value;
-        coloredPixels[i] = true;
-      }
-  }
-  sendColors();
-});
-
-//xhr to send json
-function sendColors(){
-  er(neoPixelColors);
-  var xhr = new XMLHttpRequest();
-  xhr.onreadystatechange = function(){
-    if(this.readyState == 4 && this.status == 200){
-
-    }
-  }
-  xhr.open("POST", "/jsonfile", true);
-  xhr.send(JSON.stringify(neoPixelColors));
-}
-
-//function for brightness change
-doc("brightness").addEventListener('input', function(){
-  doc("generalRangeValue").innerHTML = this.value;
-  docOC("colorWrapper").style.backgroundColor = includeBrightness(parseInt(doc("colorInput").value.substring(1), 16));
-  brightnessValue = this.value;
-  for(var i=0; i<16; i++){
-    if(coloredPixels[i]){
-      var colorVal = includeBrightness(parseInt(colorArray[i].substring(1), 16));
-      doc("d"+i).style.backgroundColor = colorVal;
-      doc("d"+i).style.boxShadow = "0 0 "+(parseInt(brightnessValue/5))+"px "+colorVal;
-      neoPixelColors["n"+i] = colorVal;
-    }
-  }
-    sendColors();
-});
-
 //convert rgb to hsv
-function includeBrightness(rgbVal){
+function addBrightness(rgbVal, reverse){
+  reverse = reverse || false;
+  rgbVal = parseInt(rgbVal.substring(1),16);
   const blue = rgbVal & 255;
   const green = (rgbVal >> 8) & 255;
   const red = (rgbVal >> 16) & 255;
@@ -130,33 +237,19 @@ function includeBrightness(rgbVal){
   const delta = Cmax - Cmin;
   var hsv = {};
 
-  if(delta == 0){
-    hsv.hue = 0;
-  }else if(Cmax == _R){
-    hsv.hue = 60*mod(((_G-_B)/delta),6);
-  }else if(Cmax == _G){
-    hsv.hue =60*((_B-_R)/delta + 2);
-  }else if(Cmax == _B){
-    hsv.hue = 60*((_R-_G)/delta + 4);
-  }
+  hsv.hue = (delta == 0)? 0 : (Cmax == _R)? 60*mod(((_G-_B)/delta),6) : (Cmax == _G)? 60*((_B-_R)/delta + 2) : 60*((_R-_G)/delta + 4);
+  hsv.sat = (Cmax == 0)? 0 : delta/Cmax;
+  hsv.val = (reverse)? Math.round((Cmax*100/brightnessValue)*100)/100 :  Math.round((Cmax*brightnessValue/100)*100)/100;//this is where the brightness is changed
 
-  if(Cmax == 0){
-    hsv.sat = 0;
-  }else{
-    hsv.sat = delta/Cmax;
-  }
-  hsv.val = Cmax*brightnessValue/100;
-  //er("rgb: " + ("000"+String(red)).slice(-3) + ("000"+String(green)).slice(-3) + ("000"+String(blue)).slice(-3));
-
-  //er("h: "+hsv.hue);
-  //er("s: "+hsv.sat);
-  //er("v: "+hsv.val);
+  er(hsv.val);
   return convertToRGB(hsv);
 }
+
 //js can't do mod of negative numbers
 function mod(n, m) {
   return ((n % m) + m) % m;
 }
+
 //function to convert hsv back to rgb
 function convertToRGB(hsv){
   const H = hsv.hue;
@@ -178,7 +271,31 @@ function convertToRGB(hsv){
 
   //er("RGB: " + ("000"+String(R)).slice(-3) + ("000"+String(G)).slice(-3) + ("000"+String(B)).slice(-3));
 
-  var hexString = ((Math.round((_R+m)*255)<<16) + (Math.round((_G+m)*255)<<8) + Math.round((_B+m)*255)).toString(16);
+  var hexString = ((R<<16) + (G<<8) + B).toString(16);
+  hexString = ("000000" + hexString).slice(-6);
+  return "#"+ hexString;
+}
+
+function randInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1) + min); //The maximum is inclusive and the minimum is inclusive
+}
+
+function randomHex(){
+  var rgb = [0,1,2];
+  var random = Math.floor(Math.random() * rgb.length);
+  const random1 = rgb[random];
+  rgb.splice(random,1);
+  random = random = Math.floor(Math.random() * rgb.length);
+  const random2 =  rgb[random];
+  rgb.splice(random,1);
+
+  var rgbVals = []
+  rgbVals[random1] = 0;
+  rgbVals[random2] = 255;
+  rgbVals[rgb[0]] = randInt(0,256);
+  var hexString = ((rgbVals[0]<<16) + (rgbVals[1]<<8) + rgbVals[2]).toString(16);
   hexString = ("000000" + hexString).slice(-6);
   return "#"+ hexString;
 }
